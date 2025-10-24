@@ -1,9 +1,16 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { join } from 'path';
+import { join, resolve } from 'path';
+import { existsSync } from 'fs';
 
 // Load environment variables from root .env file
-config({ path: join(__dirname, '..', '..', '..', '.env') });
+const envPath = resolve(__dirname, '..', '..', '..', '.env');
+if (existsSync(envPath)) {
+  config({ path: envPath });
+} else {
+  // Fallback for when running from compiled dist
+  config({ path: resolve(process.cwd(), '.env') });
+}
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
