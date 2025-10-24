@@ -18,7 +18,7 @@ import { HistoryModule } from './modules/history/history.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '../.env',
     }),
 
     // Database
