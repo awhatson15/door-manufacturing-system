@@ -1,11 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/router';
+import { authApi, LoginRequest, UserProfile } from '../api';
 
 interface User {
   id: string;
   email: string;
   name: string;
   role: string;
+  roleId: string;
+  isActive: boolean;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthContextType {
@@ -13,7 +19,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, name: string, roleId?: string) => Promise<void>;
+  refreshToken: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,45 +44,91 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем наличие токена при загрузке
-    const token = localStorage.getItem('token');
-    if (token) {
-      // В реальном приложении здесь будет запрос на сервер для валидации токена
-      const mockUser: User = {
-        id: '1',
-        email: 'admin@example.com',
-        name: 'Admin User',
-        role: 'admin',
-      };
-      setUser(mockUser);
-    }
-    setIsLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const token = authApi.getAccessToken();
+        if (token) {
+          // Проверяем валидность токена и получаем данные пользователя
+          const userProfile = await authApi.getProfile();
+          setUser(userProfile);
+        }
+      } catch (error) {
+        console.error('Ошибка при инициализации аутентификации:', error);
+        // Если токен невалидный, очищаем его
+        authApi.clearTokens();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // В реальном приложении здесь будет запрос на сервер
-      const mockUser: User = {
-        id: '1',
-        email: email,
-        name: 'User Name',
-        role: 'user',
-      };
-      setUser(mockUser);
-      localStorage.setItem('token', 'mock-token');
+      const loginData: LoginRequest = { email, password };
+      const response = await authApi.login(loginData);
+      
+      // Сохраняем токены
+      authApi.saveTokens(response.accessToken, response.refreshToken);
+      
+      // Устанавливаем данные пользователя
+      setUser(response.user);
+      
+      // Перенаправляем на главную страницу
       router.push('/');
     } catch (error) {
+      console.error('Ошибка входа:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-    router.push('/login');
+  const logout = async () => {
+    try {
+      // Вызываем API для выхода
+      await authApi.logout();
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+    } finally {
+      // В любом случае очищаем данные и перенаправляем
+      setUser(null);
+      authApi.clearTokens();
+      router.push('/login');
+    }
+  };
+
+  const register = async (email: string, password: string, name: string, roleId?: string) => {
+    setIsLoading(true);
+    try {
+      const registerData = { email, password, name, roleId };
+      const response = await authApi.register(registerData);
+      
+      // Сохраняем токены
+      authApi.saveTokens(response.accessToken, response.refreshToken);
+      
+      // Устанавливаем данные пользователя
+      setUser(response.user);
+      
+      // Перенаправляем на главную страницу
+      router.push('/');
+    } catch (error) {
+      console.error('Ошибка регистрации:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshToken = async (): Promise<boolean> => {
+    try {
+      return await authApi.autoRefreshToken();
+    } catch (error) {
+      console.error('Ошибка обновления токена:', error);
+      return false;
+    }
   };
 
   const value: AuthContextType = {
@@ -83,6 +137,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     logout,
+    register,
+    refreshToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
