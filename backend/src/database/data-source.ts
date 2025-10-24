@@ -14,13 +14,20 @@ if (existsSync(envPath)) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const dbHost = process.env.DB_HOST || 'localhost';
+const dbPort = process.env.DB_PORT || '5432';
+const dbUser = process.env.DB_USER || 'postgres';
+const dbPass = process.env.DB_PASSWORD || 'postgres';
+const dbName = process.env.DB_NAME || 'door_manufacturing';
+
+// Build connection URL with sslmode parameter for non-production
+const connectionUrl = isProduction
+  ? `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`
+  : `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?sslmode=disable`;
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'door_manufacturing',
+  url: connectionUrl,
   entities: [
     join(__dirname, '..', 'modules', '**', '*.entity{.ts,.js}'),
     join(__dirname, '..', 'modules', '**', '**', '*.entity{.ts,.js}'),
@@ -28,5 +35,5 @@ export const AppDataSource = new DataSource({
   migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
   synchronize: false, // Always false for migrations
   logging: !isProduction,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ...(isProduction && { ssl: { rejectUnauthorized: false } }),
 });

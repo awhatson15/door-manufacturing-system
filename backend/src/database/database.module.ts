@@ -10,13 +10,20 @@ import { join } from 'path';
       useFactory: (configService: ConfigService) => {
         const isProduction = process.env.NODE_ENV === 'production';
 
+        const dbHost = configService.get('DB_HOST') || 'localhost';
+        const dbPort = parseInt(configService.get('DB_PORT', '5432'));
+        const dbUser = configService.get('DB_USER') || 'postgres';
+        const dbPass = configService.get('DB_PASSWORD') || 'postgres';
+        const dbName = configService.get('DB_NAME') || 'door_manufacturing';
+
+        // Build connection URL with sslmode parameter for non-production
+        const connectionUrl = isProduction
+          ? `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`
+          : `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?sslmode=disable`;
+
         return {
           type: 'postgres' as const,
-          host: configService.get('DB_HOST') || 'localhost',
-          port: parseInt(configService.get('DB_PORT', '5432')),
-          username: configService.get('DB_USER') || 'postgres',
-          password: configService.get('DB_PASSWORD') || 'postgres',
-          database: configService.get('DB_NAME') || 'door_manufacturing',
+          url: connectionUrl,
           entities: [
             join(__dirname, '..', 'modules', '**', '*.entity{.ts,.js}'),
             join(__dirname, '..', 'modules', '**', '**', '*.entity{.ts,.js}'),
@@ -27,7 +34,7 @@ import { join } from 'path';
             join(__dirname, 'migrations', '*{.ts,.js}'),
           ],
           migrationsRun: true,
-          ssl: isProduction ? { rejectUnauthorized: false } : false,
+          ...(isProduction && { ssl: { rejectUnauthorized: false } }),
         };
       },
       inject: [ConfigService],
@@ -42,13 +49,20 @@ export class DatabaseModule {
   getTypeOrmOptions() {
     const isProduction = process.env.NODE_ENV === 'production';
 
+    const dbHost = this.configService.get('DB_HOST') || 'localhost';
+    const dbPort = parseInt(this.configService.get('DB_PORT', '5432'));
+    const dbUser = this.configService.get('DB_USER') || 'postgres';
+    const dbPass = this.configService.get('DB_PASSWORD') || 'postgres';
+    const dbName = this.configService.get('DB_NAME') || 'door_manufacturing';
+
+    // Build connection URL with sslmode parameter for non-production
+    const connectionUrl = isProduction
+      ? `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`
+      : `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?sslmode=disable`;
+
     return {
       type: 'postgres' as const,
-      host: this.configService.get('DB_HOST') || 'localhost',
-      port: parseInt(this.configService.get('DB_PORT', '5432')),
-      username: this.configService.get('DB_USER') || 'postgres',
-      password: this.configService.get('DB_PASSWORD') || 'postgres',
-      database: this.configService.get('DB_NAME') || 'door_manufacturing',
+      url: connectionUrl,
       entities: [
         join(__dirname, '..', 'modules', '**', '*.entity{.ts,.js}'),
         join(__dirname, '..', 'modules', '**', '**', '*.entity{.ts,.js}'),
@@ -59,7 +73,7 @@ export class DatabaseModule {
         join(__dirname, 'migrations', '*{.ts,.js}'),
       ],
       migrationsRun: true,
-      ssl: isProduction ? { rejectUnauthorized: false } : false,
+      ...(isProduction && { ssl: { rejectUnauthorized: false } }),
     };
   }
 }

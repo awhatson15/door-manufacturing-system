@@ -9,6 +9,10 @@ COPY package*.json ./
 # Install all dependencies
 RUN npm install && npm cache clean --force
 
+# Bust cache to ensure fresh build
+ARG BUILD_DATE=unknown
+RUN echo "Build date: ${BUILD_DATE}"
+
 # Copy source code
 COPY . .
 
