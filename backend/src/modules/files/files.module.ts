@@ -7,6 +7,7 @@ import { File } from './entities/file.entity';
 import { Order } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { HistoryModule } from '../history/history.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { HistoryModule } from '../history/history.module';
       dest: './uploads',
     }),
     HistoryModule,
+    UsersModule,
   ],
   controllers: [FilesController],
   providers: [FilesService],
