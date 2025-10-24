@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
     container_name: door_manufacturing_backend
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       DB_HOST: postgres
       DB_PORT: 5432
@@ -67,8 +67,8 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://door_manufacturing_backend:3000
       API_URL: http://backend:3000
-      NEXT_PUBLIC_APP_ENV: development
-      NODE_ENV: production
+      NEXT_PUBLIC_APP_ENV: ${NEXT_PUBLIC_APP_ENV:-development}
+      NODE_ENV: ${NODE_ENV:-development}
     ports:
       - "3001:3000"
     volumes:
