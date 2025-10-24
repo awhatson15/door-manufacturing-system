@@ -12,6 +12,8 @@ if (existsSync(envPath)) {
   config({ path: resolve(process.cwd(), '.env') });
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -25,6 +27,11 @@ export const AppDataSource = new DataSource({
   ],
   migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
   synchronize: false, // Always false for migrations
-  logging: process.env.NODE_ENV === 'development',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  logging: !isProduction,
+  ...(isProduction && {
+    ssl: { rejectUnauthorized: false },
+  }),
+  extra: {
+    ssl: isProduction ? { rejectUnauthorized: false } : false,
+  },
 });
