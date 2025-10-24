@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -12,6 +12,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { User } from '../users/entities/user.entity';
 import { HistoryModule } from '../history/history.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { HistoryModule } from '../history/history.module';
     }),
     TypeOrmModule.forFeature([User]),
     HistoryModule,
+    forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
   providers: [
