@@ -65,7 +65,7 @@ services:
       target: production
     container_name: door_manufacturing_frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://door_manufacturing_backend:3000
       API_URL: http://backend:3000
       NEXT_PUBLIC_APP_ENV: development
       NODE_ENV: production
