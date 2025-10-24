@@ -17,10 +17,14 @@ const nextConfig = {
     NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV || 'development',
   },
   async rewrites() {
+    // Use API_URL for server-side rewrites (Docker internal communication)
+    // Use NEXT_PUBLIC_API_URL for client-side (browser) requests
+    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/:path*`,
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },
