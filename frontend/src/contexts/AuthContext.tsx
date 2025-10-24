@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       setUser(mockUser);
       localStorage.setItem('token', 'mock-token');
-      router.push('/dashboard');
+      router.push('/');
     } catch (error) {
       throw error;
     } finally {
