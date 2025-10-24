@@ -105,8 +105,8 @@ export class FilesController {
   @ApiParam({ name: 'id', description: 'ID файла' })
   @ApiResponse({ status: 200, description: 'Файл найден' })
   @ApiResponse({ status: 404, description: 'Файл не найден' })
-  async findOne(@Param('id') id: string) {
-    return await this.filesService.findOne(id);
+  async findOne(@Param('id') id: string, @Request() req) {
+    return await this.filesService.findOne(id, req.user.id);
   }
 
   @Get(':id/download')
@@ -114,8 +114,8 @@ export class FilesController {
   @ApiParam({ name: 'id', description: 'ID файла' })
   @ApiResponse({ status: 200, description: 'Файл скачан' })
   @ApiResponse({ status: 404, description: 'Файл не найден' })
-  async download(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
-    const file = await this.filesService.trackDownload(id);
+  async download(@Param('id') id: string, @Res({ passthrough: true }) res: Response, @Request() req) {
+    const file = await this.filesService.trackDownload(id, req.user.id);
 
     if (!fs.existsSync(file.filePath)) {
       throw new Error('Физический файл не найден');

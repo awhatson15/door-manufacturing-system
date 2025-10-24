@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,6 +17,7 @@ import { HistoryAction, HistoryEntityType } from '../../history/entities/history
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
+import { UsersService } from '../../users/services/users.service';
 
 const unlinkAsync = promisify(fs.unlink);
 
@@ -29,7 +31,23 @@ export class FilesService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly historyService: HistoryService,
+    private readonly usersService: UsersService,
   ) {}
+
+  private async checkOrderAccess(orderId: string, userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
+    const order = await this.orderRepository.findOne({ where: { id: orderId }, relations: ['manager'] });
+
+    if (!order) {
+      throw new NotFoundException('Заказ не найден');
+    }
+
+    const isAdmin = user.roles.some(role => role.name === 'admin');
+
+    if (!isAdmin && order.manager.id !== userId) {
+      throw new ForbiddenException('У вас нет доступа к этому заказу');
+    }
+  }
 
   /**
    * Загрузка файла
@@ -40,6 +58,8 @@ export class FilesService {
     currentUserId: string,
   ): Promise<File> {
     const { orderId, type, visibility, description, commentId } = createFileDto;
+
+    await this.checkOrderAccess(orderId, currentUserId);
 
     // Проверяем существование заявки
     const order = await this.orderRepository.findOne({ where: { id: orderId } });
@@ -128,7 +148,7 @@ export class FilesService {
   /**
    * Получение файла по ID
    */
-  async findOne(id: string): Promise<File> {
+  async findOne(id: string, currentUserId: string): Promise<File> {
     const file = await this.fileRepository.findOne({
       where: { id },
       relations: ['order', 'uploadedBy'],
@@ -138,6 +158,8 @@ export class FilesService {
       throw new NotFoundException('Файл не найден');
     }
 
+    await this.checkOrderAccess(file.order.id, currentUserId);
+
     return file;
   }
 
@@ -145,7 +167,7 @@ export class FilesService {
    * Обновление метаданных файла
    */
   async update(id: string, updateFileDto: UpdateFileDto, currentUserId: string): Promise<File> {
-    const file = await this.findOne(id);
+    const file = await this.findOne(id, currentUserId);
 
     Object.assign(file, updateFileDto);
     const updatedFile = await this.fileRepository.save(file);
@@ -168,7 +190,7 @@ export class FilesService {
    * Удаление файла
    */
   async remove(id: string, currentUserId: string): Promise<void> {
-    const file = await this.findOne(id);
+    const file = await this.findOne(id, currentUserId);
 
     // Записываем в историю перед удалением
     await this.historyService.recordAction(
@@ -206,8 +228,8 @@ export class FilesService {
   /**
    * Отслеживание загрузки файла
    */
-  async trackDownload(id: string): Promise<File> {
-    const file = await this.findOne(id);
+  async trackDownload(id: string, currentUserId: string): Promise<File> {
+    const file = await this.findOne(id, currentUserId);
 
     file.downloadCount += 1;
     file.lastDownloadedAt = new Date();

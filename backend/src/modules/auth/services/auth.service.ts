@@ -63,7 +63,6 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
       roles: user.roles?.map(role => role.name) || [],
     };
 
@@ -128,7 +127,6 @@ export class AuthService {
     const payload = {
       sub: savedUser.id,
       email: savedUser.email,
-      role: savedUser.role,
       roles: savedUser.roles?.map(role => role.name) || [],
     };
 
@@ -193,7 +191,6 @@ export class AuthService {
       const payload = {
         sub: user.id,
         email: user.email,
-        role: user.role,
         roles: user.roles?.map(role => role.name) || [],
       };
 
@@ -225,7 +222,6 @@ export class AuthService {
     const payload = {
       sub: currentUser.id,
       email: currentUser.email,
-      role: currentUser.role,
       roles: currentUser.roles?.map(role => role.name) || [],
     };
 

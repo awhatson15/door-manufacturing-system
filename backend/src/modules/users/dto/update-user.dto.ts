@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
 import { IsEmail, IsString, IsOptional, IsEnum, IsArray, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole, UserStatus } from '../entities/user.entity';
+import { UserStatus } from '../entities/user.entity';
 import { CreateUserDto } from './create-user.dto';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
@@ -30,11 +30,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsString()
   @IsOptional()
   phoneNumber?: string;
-
-  @ApiPropertyOptional({ enum: UserRole, example: UserRole.ADMIN, description: 'Роль пользователя' })
-  @IsEnum(UserRole)
-  @IsOptional()
-  role?: UserRole;
 
   @ApiPropertyOptional({ enum: UserStatus, example: UserStatus.ACTIVE, description: 'Статус пользователя' })
   @IsEnum(UserStatus)

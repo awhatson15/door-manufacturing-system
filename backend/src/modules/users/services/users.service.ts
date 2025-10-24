@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { User, UserRole, UserStatus } from '../entities/user.entity';
+import { User, UserStatus } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
 import { Permission } from '../entities/permission.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -125,7 +125,11 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
-    await this.userRepository.remove(user);
+    await this.userRepository.softRemove(user);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.userRepository.restore(id);
   }
 
   async changePassword(id: string, changePasswordDto: ChangePasswordDto): Promise<void> {
@@ -206,7 +210,7 @@ export class UsersService {
     }
 
     // Admin has all permissions
-    if (user.role === UserRole.ADMIN) {
+    if (user.roles.some(role => role.name === 'admin')) {
       return true;
     }
 
@@ -250,7 +254,7 @@ export class UsersService {
     }
 
     // Admin gets all permissions
-    if (user.role === UserRole.ADMIN) {
+    if (user.roles.some(role => role.name === 'admin')) {
       return await this.permissionRepository.find({ where: { isActive: true } });
     }
 

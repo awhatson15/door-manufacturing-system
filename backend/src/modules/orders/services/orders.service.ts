@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, Like, In } from 'typeorm';
+import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, Like, In, EntityManager } from 'typeorm';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { OrderStage, OrderStageStatus } from '../entities/order-stage.entity';
 import { Customer } from '../../customers/entities/customer.entity';
@@ -36,87 +31,90 @@ export class OrdersService {
     @InjectRepository(Stage)
     private readonly stageRepository: Repository<Stage>,
     private readonly historyService: HistoryService,
+    private readonly entityManager: EntityManager,
   ) {}
 
   /**
    * Создание новой заявки
    */
   async create(createOrderDto: CreateOrderDto, currentUserId?: string): Promise<Order> {
-    const { customerId, managerId, ...orderData } = createOrderDto;
+    return this.entityManager.transaction(async transactionalEntityManager => {
+      const { customerId, managerId, ...orderData } = createOrderDto;
 
-    // Проверяем существование заказчика
-    const customer = await this.customerRepository.findOne({ where: { id: customerId } });
-    if (!customer) {
-      throw new NotFoundException('Заказчик не найден');
-    }
-
-    // Определяем менеджера (из DTO или текущий пользователь)
-    let manager: User;
-    if (managerId) {
-      manager = await this.userRepository.findOne({ where: { id: managerId } });
-      if (!manager) {
-        throw new NotFoundException('Менеджер не найден');
+      // Проверяем существование заказчика
+      const customer = await transactionalEntityManager.findOne(Customer, { where: { id: customerId } });
+      if (!customer) {
+        throw new NotFoundException('Заказчик не найден');
       }
-    } else if (currentUserId) {
-      manager = await this.userRepository.findOne({ where: { id: currentUserId } });
-      if (!manager) {
-        throw new NotFoundException('Текущий пользователь не найден');
-      }
-    } else {
-      throw new BadRequestException('Необходимо указать менеджера');
-    }
 
-    // Проверяем уникальность mainNumber, если указан
-    if (orderData.mainNumber) {
-      const existingOrder = await this.orderRepository.findOne({
-        where: { mainNumber: orderData.mainNumber },
+      // Определяем менеджера (из DTO или текущий пользователь)
+      let manager: User;
+      if (managerId) {
+        manager = await transactionalEntityManager.findOne(User, { where: { id: managerId } });
+        if (!manager) {
+          throw new NotFoundException('Менеджер не найден');
+        }
+      } else if (currentUserId) {
+        manager = await transactionalEntityManager.findOne(User, { where: { id: currentUserId } });
+        if (!manager) {
+          throw new NotFoundException('Текущий пользователь не найден');
+        }
+      } else {
+        throw new BadRequestException('Необходимо указать менеджера');
+      }
+
+      // Проверяем уникальность mainNumber, если указан
+      if (orderData.mainNumber) {
+        const existingOrder = await transactionalEntityManager.findOne(Order, {
+          where: { mainNumber: orderData.mainNumber },
+        });
+        if (existingOrder) {
+          throw new ConflictException('Заявка с таким основным номером уже существует');
+        }
+      }
+
+      // Генерируем внутренний номер
+      const internalNumber = await this.generateInternalNumber(transactionalEntityManager);
+
+      // Создаем заявку
+      const order = transactionalEntityManager.create(Order, {
+        ...orderData,
+        internalNumber,
+        customer,
+        manager,
+        status: OrderStatus.NEW,
+        paidAmount: orderData.paidAmount || 0,
+        isPaid: orderData.isPaid || false,
+        isCancelled: false,
+        isPaused: false,
+        commentsCount: 0,
+        filesCount: 0,
+        stagesCount: 0,
+        completedStagesCount: 0,
       });
-      if (existingOrder) {
-        throw new ConflictException('Заявка с таким основным номером уже существует');
+
+      const savedOrder = await transactionalEntityManager.save(order);
+
+      // Записываем в историю
+      if (currentUserId) {
+        await this.historyService.recordAction(
+          currentUserId,
+          HistoryAction.CREATE,
+          HistoryEntityType.ORDER,
+          savedOrder.id,
+          null,
+          {
+            internalNumber: savedOrder.internalNumber,
+            mainNumber: savedOrder.mainNumber,
+            status: savedOrder.status,
+            doorType: savedOrder.doorType,
+          },
+          `Создана заявка ${savedOrder.displayName}`,
+        );
       }
-    }
 
-    // Генерируем внутренний номер
-    const internalNumber = await this.generateInternalNumber();
-
-    // Создаем заявку
-    const order = this.orderRepository.create({
-      ...orderData,
-      internalNumber,
-      customer,
-      manager,
-      status: OrderStatus.NEW,
-      paidAmount: orderData.paidAmount || 0,
-      isPaid: orderData.isPaid || false,
-      isCancelled: false,
-      isPaused: false,
-      commentsCount: 0,
-      filesCount: 0,
-      stagesCount: 0,
-      completedStagesCount: 0,
+      return savedOrder;
     });
-
-    const savedOrder = await this.orderRepository.save(order);
-
-    // Записываем в историю
-    if (currentUserId) {
-      await this.historyService.recordAction(
-        currentUserId,
-        HistoryAction.CREATE,
-        HistoryEntityType.ORDER,
-        savedOrder.id,
-        null,
-        {
-          internalNumber: savedOrder.internalNumber,
-          mainNumber: savedOrder.mainNumber,
-          status: savedOrder.status,
-          doorType: savedOrder.doorType,
-        },
-        `Создана заявка ${savedOrder.displayName}`,
-      );
-    }
-
-    return savedOrder;
   }
 
   /**
@@ -141,6 +139,10 @@ export class OrdersService {
     } = queryDto;
 
     const skip = (page - 1) * limit;
+
+    // Whitelist of allowed sort fields
+    const allowedSortByFields = ['createdAt', 'internalNumber', 'mainNumber', 'status', 'doorType', 'plannedCompletionDate', 'totalAmount'];
+    const safeSortBy = allowedSortByFields.includes(sortBy) ? sortBy : 'createdAt';
 
     // Строим запрос
     const queryBuilder = this.orderRepository
@@ -197,7 +199,7 @@ export class OrdersService {
     }
 
     // Сортировка
-    queryBuilder.orderBy(`order.${sortBy}`, sortOrder);
+    queryBuilder.orderBy(`order.${safeSortBy}`, sortOrder);
 
     // Выполняем запрос
     const [orders, total] = await queryBuilder.getManyAndCount();
@@ -529,13 +531,14 @@ export class OrdersService {
   /**
    * Генерация внутреннего номера заявки
    */
-  private async generateInternalNumber(): Promise<string> {
+  private async generateInternalNumber(entityManager: EntityManager): Promise<string> {
     const year = new Date().getFullYear();
     const prefix = `ORD-${year}`;
 
-    // Находим последний номер за текущий год
-    const lastOrder = await this.orderRepository
-      .createQueryBuilder('order')
+    // Находим последний номер за текущий год с блокировкой
+    const lastOrder = await entityManager
+      .createQueryBuilder(Order, 'order')
+      .setLock('pessimistic_write')
       .where('order.internalNumber LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('order.createdAt', 'DESC')
       .getOne();

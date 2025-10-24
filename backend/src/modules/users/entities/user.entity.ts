@@ -4,12 +4,6 @@ import { Order } from '../../orders/entities/order.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { History } from '../../history/entities/history.entity';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  CUSTOMER = 'customer',
-}
-
 export enum UserStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
@@ -35,13 +29,6 @@ export class User {
 
   @Column({ name: 'phone_number', nullable: true })
   phoneNumber?: string;
-
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.MANAGER,
-  })
-  role: UserRole;
 
   @Column({
     type: 'enum',
@@ -76,6 +63,9 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt?: Date;
 
   // Relations
   @ManyToMany(() => Role, (role) => role.users)

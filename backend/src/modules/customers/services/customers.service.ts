@@ -92,6 +92,10 @@ export class CustomersService {
 
     const skip = (page - 1) * limit;
 
+    // Whitelist of allowed sort fields
+    const allowedSortByFields = ['createdAt', 'companyName', 'firstName', 'lastName', 'email', 'status', 'totalOrders', 'totalAmount', 'lastOrderDate'];
+    const safeSortBy = allowedSortByFields.includes(sortBy) ? sortBy : 'createdAt';
+
     // Строим запрос
     const queryBuilder = this.customerRepository
       .createQueryBuilder('customer')
@@ -115,7 +119,7 @@ export class CustomersService {
     }
 
     // Сортировка
-    queryBuilder.orderBy(`customer.${sortBy}`, sortOrder);
+    queryBuilder.orderBy(`customer.${safeSortBy}`, sortOrder);
 
     // Выполняем запрос
     const [customers, total] = await queryBuilder.getManyAndCount();
