@@ -57,8 +57,14 @@ COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
 # Copy package files
 COPY --chown=appuser:appgroup package*.json ./
 
-# Install only production dependencies
-RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+# Copy source files needed for migrations
+COPY --from=builder --chown=appuser:appgroup /app/src/database ./src/database
+COPY --from=builder --chown=appuser:appgroup /app/tsconfig.json ./tsconfig.json
+
+# Install production dependencies + migration tools
+RUN npm install --omit=dev --no-audit --no-fund && \
+    npm install ts-node tsconfig-paths --no-save --no-audit --no-fund && \
+    npm cache clean --force
 
 # Create uploads directory
 RUN mkdir -p uploads && chown appuser:appgroup uploads
