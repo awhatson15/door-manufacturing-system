@@ -1,10 +1,16 @@
-import { Injectable, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserStatus } from '../../users/entities/user.entity';
 import { LoginDto } from '../dto/login.dto';
+import { RegisterDto } from '../dto/register.dto';
 import { LoginResponseDto } from '../dto/login-response.dto';
 import { HistoryService } from '../../history/services/history.service';
 import { HistoryAction, HistoryEntityType } from '../../history/entities/history.entity';
@@ -15,7 +21,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly historyService: HistoryService,
+    private readonly historyService: HistoryService
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -40,7 +46,11 @@ export class AuthService {
     return user;
   }
 
-  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<LoginResponseDto> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<LoginResponseDto> {
     const { email, password, rememberMe } = loginDto;
 
     // Validate user credentials
@@ -85,6 +95,65 @@ export class AuthService {
     };
   }
 
+  async register(
+    registerDto: RegisterDto,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<LoginResponseDto> {
+    const { email, password, firstName, lastName, phone } = registerDto;
+
+    // Check if user already exists
+    const existingUser = await this.userRepository.findOne({ where: { email } });
+    if (existingUser) {
+      throw new BadRequestException('Пользователь с таким email уже существует');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = this.userRepository.create({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      phoneNumber: phone,
+      status: UserStatus.ACTIVE,
+      isEmailVerified: false,
+    });
+
+    const savedUser = (await this.userRepository.save(user)) as User;
+
+    // Generate JWT token
+    const payload = {
+      sub: savedUser.id,
+      email: savedUser.email,
+      role: savedUser.role,
+      roles: savedUser.roles?.map(role => role.name) || [],
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    // Log registration action
+    await this.historyService.create({
+      action: HistoryAction.CREATE,
+      entityType: HistoryEntityType.USER,
+      entityId: savedUser.id,
+      entityName: savedUser.fullName,
+      description: 'Зарегистрирован новый пользователь',
+      ipAddress,
+      userAgent,
+      user: savedUser,
+    });
+
+    return {
+      accessToken,
+      expiresIn: 86400, // 24 hours
+      tokenType: 'Bearer',
+      user: savedUser,
+    };
+  }
+
   async logout(user: User, ipAddress?: string, userAgent?: string): Promise<void> {
     // Log logout action
     await this.historyService.create({
@@ -99,7 +168,42 @@ export class AuthService {
     });
   }
 
-  async refreshToken(user: User): Promise<LoginResponseDto> {
+  async refreshToken(refreshToken: string): Promise<LoginResponseDto> {
+    try {
+      // Decode refresh token to get user ID
+      const decoded = this.jwtService.verify(refreshToken);
+
+      const user = await this.userRepository.findOne({
+        where: { id: decoded.sub },
+        relations: ['roles', 'roles.permissions'],
+      });
+
+      if (!user || user.status !== UserStatus.ACTIVE) {
+        throw new UnauthorizedException('Пользователь не найден или неактивен');
+      }
+
+      // Generate new JWT token
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        roles: user.roles?.map(role => role.name) || [],
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        expiresIn: 86400, // 24 hours
+        tokenType: 'Bearer',
+        user: user,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Недействительный refresh токен');
+    }
+  }
+
+  async refreshTokenWithUser(user: User): Promise<LoginResponseDto> {
     // Validate user still exists and is active
     const currentUser = await this.userRepository.findOne({
       where: { id: user.id },
@@ -209,7 +313,11 @@ export class AuthService {
     });
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {

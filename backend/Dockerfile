@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies
+RUN npm install && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -18,8 +18,17 @@ RUN npm run build
 # Production stage
 FROM node:18-alpine AS production
 
-# Install dependencies for Puppeteer
-RUN apk add --no-cache \
+# Install dependencies for Puppeteer with better error handling
+RUN apk update && apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    --allow-untrusted || \
+    apk add --no-cache \
     chromium \
     nss \
     freetype \
@@ -45,7 +54,7 @@ COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
 COPY --chown=appuser:appgroup package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # Create uploads directory
 RUN mkdir -p uploads && chown appuser:appgroup uploads
@@ -61,4 +70,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node dist/health-check.js || exit 1
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main"]

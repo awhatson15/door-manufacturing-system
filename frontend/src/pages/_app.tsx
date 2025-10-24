@@ -9,15 +9,18 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import '@/styles/globals.css';
 
 function App({ Component, pageProps }: AppProps) {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false,
-        retry: 1,
-        staleTime: 5 * 60 * 1000, // 5 минут
-      },
-    },
-  }));
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 5 * 60 * 1000, // 5 минут
+          },
+        },
+      })
+  );
 
   return (
     <Provider store={store}>
@@ -26,7 +29,7 @@ function App({ Component, pageProps }: AppProps) {
           <AuthProvider>
             <Component {...pageProps} />
             <Toaster
-              position="top-right"
+              position='top-right'
               toastOptions={{
                 duration: 4000,
                 style: {

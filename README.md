@@ -51,7 +51,7 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/awhatson15/door-manufacturing-system.git
 cd door-manufacturing-system
 ```
 

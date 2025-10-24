@@ -20,7 +20,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     const response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
-      map((data) => {
+      map(data => {
         // If the response is already in our format, return it as is
         if (data && typeof data === 'object' && 'success' in data) {
           return data;
@@ -40,14 +40,16 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         // Handle pagination
         if (data && typeof data === 'object' && 'items' in data && 'total' in data) {
           transformedResponse.data = {
-            items: data.items,
+            items: (data as any).items,
             pagination: {
-              total: data.total,
-              page: data.page || 1,
-              limit: data.limit || 10,
-              totalPages: Math.ceil(data.total / (data.limit || 10)),
+              total: (data as any).total,
+              page: (data as any).page || 1,
+              limit: (data as any).limit || 10,
+              totalPages: Math.ceil((data as any).total / ((data as any).limit || 10)),
             },
-          };
+          } as T;
+        } else {
+          transformedResponse.data = data as T;
         }
 
         // Add message if available
@@ -57,7 +59,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         }
 
         return transformedResponse;
-      }),
+      })
     );
   }
 

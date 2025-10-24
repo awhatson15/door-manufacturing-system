@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  Index,
+} from 'typeorm';
 import { OrderStage } from '../../orders/entities/order-stage.entity';
 
 export enum StageType {
@@ -8,7 +16,7 @@ export enum StageType {
 
 @Entity('stages')
 @Index(['order'])
-@Index(['is_active'])
+@Index(['isActive'])
 export class Stage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -57,7 +65,7 @@ export class Stage {
   updatedAt: Date;
 
   // Relations
-  @OneToMany(() => OrderStage, (orderStage) => orderStage.stage)
+  @OneToMany(() => OrderStage, orderStage => orderStage.stage)
   orderStages: OrderStage[];
 
   // Virtual fields

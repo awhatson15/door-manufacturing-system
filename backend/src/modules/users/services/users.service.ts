@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -17,7 +22,7 @@ export class UsersService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Permission)
-    private readonly permissionRepository: Repository<Permission>,
+    private readonly permissionRepository: Repository<Permission>
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -45,7 +50,7 @@ export class UsersService {
     } else {
       // Assign default role
       const defaultRole = await this.roleRepository.findOne({
-        where: { name: 'MANAGER' }
+        where: { name: 'MANAGER' },
       });
       if (defaultRole) {
         user.roles = [defaultRole];
@@ -53,6 +58,19 @@ export class UsersService {
     }
 
     return await this.userRepository.save(user);
+  }
+
+  async findById(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['roles', 'roles.permissions'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return user;
   }
 
   async findAll(): Promise<User[]> {
@@ -179,7 +197,7 @@ export class UsersService {
 
   async hasPermission(userId: string, resource: string, action: string): Promise<boolean> {
     const user = await this.userRepository.findOne({
-      where: { id },
+      where: { id: userId },
       relations: ['roles', 'roles.permissions'],
     });
 
@@ -195,7 +213,11 @@ export class UsersService {
     // Check user permissions
     for (const role of user.roles) {
       for (const permission of role.permissions) {
-        if (permission.resource === resource && permission.action === action && permission.isActive) {
+        if (
+          permission.resource === resource &&
+          permission.action === action &&
+          permission.isActive
+        ) {
           return true;
         }
       }
@@ -204,7 +226,11 @@ export class UsersService {
     // Check for manage permission (grants all actions)
     for (const role of user.roles) {
       for (const permission of role.permissions) {
-        if (permission.resource === resource && permission.action === 'manage' && permission.isActive) {
+        if (
+          permission.resource === resource &&
+          permission.action === 'manage' &&
+          permission.isActive
+        ) {
           return true;
         }
       }
@@ -215,7 +241,7 @@ export class UsersService {
 
   async getUserPermissions(userId: string): Promise<Permission[]> {
     const user = await this.userRepository.findOne({
-      where: { id },
+      where: { id: userId },
       relations: ['roles', 'roles.permissions'],
     });
 
@@ -264,9 +290,12 @@ export class UsersService {
     return await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
-      .where('user.firstName ILIKE :query OR user.lastName ILIKE :query OR user.email ILIKE :query', {
-        query: `%${query}%`,
-      })
+      .where(
+        'user.firstName ILIKE :query OR user.lastName ILIKE :query OR user.email ILIKE :query',
+        {
+          query: `%${query}%`,
+        }
+      )
       .getMany();
   }
 }

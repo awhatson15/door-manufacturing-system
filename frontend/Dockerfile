@@ -5,10 +5,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY yarn.lock* ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies with improved flags
+RUN npm install --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -30,10 +29,12 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copy built application
 COPY --from=builder --chown=appuser:appgroup /app/.next ./.next
-COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
 COPY --from=builder --chown=appuser:appgroup /app/public ./public
 COPY --from=builder --chown=appuser:appgroup /app/next.config.js ./
+
+# Install only production dependencies
+RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # Switch to non-root user
 USER appuser

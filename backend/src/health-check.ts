@@ -2,34 +2,30 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Connection } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import * as Redis from 'redis';
+import { createClient } from 'redis';
 
 @Injectable()
 export class HealthCheckService {
-  private redisClient: Redis.RedisClientType;
+  private redisClient: ReturnType<typeof createClient>;
 
   constructor(
     @InjectConnection()
     private readonly connection: Connection,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     // Initialize Redis client
-    this.redisClient = Redis.createClient({
-      host: this.configService.get('REDIS_HOST') || 'localhost',
-      port: parseInt(this.configService.get('REDIS_PORT') || '6379'),
-      retry_strategy: (options) => {
-        if (options.error && options.error.code === 'ECONNREFUSED') {
-          return new Error('Redis сервер недоступен');
-        }
-        if (options.total_retry_time > 1000 * 60 * 60) {
-          return new Error('Лимит времени повторных попыток превышен');
-        }
-        if (options.attempt > 10) {
-          return undefined;
-        }
-        return Math.min(options.attempt * 100, 3000);
+    this.redisClient = createClient({
+      socket: {
+        host: this.configService.get('REDIS_HOST') || 'localhost',
+        port: parseInt(this.configService.get('REDIS_PORT') || '6379'),
       },
     });
+
+    this.redisClient.on('error', err => {
+      console.error('Redis Client Error:', err);
+    });
+
+    this.redisClient.connect();
   }
 
   async checkDatabaseHealth(): Promise<{ status: string; responseTime?: number; error?: string }> {
@@ -110,7 +106,8 @@ if (require.main === module) {
   const configService = new ConfigService();
   const healthService = new HealthCheckService(null, configService);
 
-  healthService.checkSystemHealth()
+  healthService
+    .checkSystemHealth()
     .then(result => {
       if (result.status === 'healthy') {
         console.log('Health check passed');

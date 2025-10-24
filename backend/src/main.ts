@@ -3,9 +3,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { ThrottlerGuard } from '@nestjs/throttler';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,17 +17,8 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   );
-
-  // Global filters
-  app.useGlobalFilters(new GlobalExceptionFilter());
-
-  // Global interceptors
-  app.useGlobalInterceptors(new TransformInterceptor());
-
-  // Rate limiting
-  app.useGlobalGuards(new ThrottlerGuard());
 
   // CORS
   app.enableCors({
