@@ -8,21 +8,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Custom CSS variable-based colors for theming
+        // Custom CSS variable-based colors for theming (with opacity support)
         border: {
-          DEFAULT: 'var(--color-border)',
-          hover: 'var(--color-border-hover)',
+          DEFAULT: 'rgb(var(--color-border-rgb) / <alpha-value>)',
+          hover: 'rgb(var(--color-border-hover-rgb) / <alpha-value>)',
         },
-        background: 'var(--color-background)',
-        surface: 'var(--color-surface)',
+        background: 'rgb(var(--color-background-rgb) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface-rgb) / <alpha-value>)',
         text: {
-          DEFAULT: 'var(--color-text)',
-          secondary: 'var(--color-text-secondary)',
+          DEFAULT: 'rgb(var(--color-text-rgb) / <alpha-value>)',
+          secondary: 'rgb(var(--color-text-secondary-rgb) / <alpha-value>)',
         },
-        // Semantic color palettes
+        // Semantic color palettes (with opacity support)
         primary: {
-          DEFAULT: 'var(--color-primary)',
-          dark: 'var(--color-primary-dark)',
+          DEFAULT: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--color-primary-dark-rgb) / <alpha-value>)',
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
@@ -36,7 +36,7 @@ module.exports = {
           950: '#172554',
         },
         secondary: {
-          DEFAULT: 'var(--color-secondary)',
+          DEFAULT: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -50,7 +50,7 @@ module.exports = {
           950: '#020617',
         },
         success: {
-          DEFAULT: 'var(--color-success)',
+          DEFAULT: 'rgb(var(--color-success-rgb) / <alpha-value>)',
           50: '#f0fdf4',
           100: '#dcfce7',
           200: '#bbf7d0',
@@ -64,7 +64,7 @@ module.exports = {
           950: '#052e16',
         },
         warning: {
-          DEFAULT: 'var(--color-warning)',
+          DEFAULT: 'rgb(var(--color-warning-rgb) / <alpha-value>)',
           50: '#fffbeb',
           100: '#fef3c7',
           200: '#fde68a',
@@ -78,7 +78,7 @@ module.exports = {
           950: '#451a03',
         },
         error: {
-          DEFAULT: 'var(--color-error)',
+          DEFAULT: 'rgb(var(--color-error-rgb) / <alpha-value>)',
           50: '#fef2f2',
           100: '#fee2e2',
           200: '#fecaca',

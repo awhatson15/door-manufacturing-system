@@ -8,6 +8,21 @@
 /* Базовые стили */
 @layer base {
   :root {
+    /* RGB values for opacity support */
+    --color-primary-rgb: 59 130 246;
+    --color-primary-dark-rgb: 37 99 235;
+    --color-secondary-rgb: 100 116 139;
+    --color-success-rgb: 34 197 94;
+    --color-warning-rgb: 245 158 11;
+    --color-error-rgb: 239 68 68;
+    --color-background-rgb: 255 255 255;
+    --color-surface-rgb: 248 250 252;
+    --color-text-rgb: 30 41 59;
+    --color-text-secondary-rgb: 100 116 139;
+    --color-border-rgb: 226 232 240;
+    --color-border-hover-rgb: 203 213 225;
+
+    /* Fallback hex values for non-opacity use */
     --color-primary: #3b82f6;
     --color-primary-dark: #2563eb;
     --color-secondary: #64748b;
@@ -23,6 +38,21 @@
   }
 
   [data-theme="dark"] {
+    /* RGB values for opacity support */
+    --color-primary-rgb: 96 165 250;
+    --color-primary-dark-rgb: 59 130 246;
+    --color-secondary-rgb: 148 163 184;
+    --color-success-rgb: 74 222 128;
+    --color-warning-rgb: 251 191 36;
+    --color-error-rgb: 248 113 113;
+    --color-background-rgb: 15 23 42;
+    --color-surface-rgb: 30 41 59;
+    --color-text-rgb: 241 245 249;
+    --color-text-secondary-rgb: 148 163 184;
+    --color-border-rgb: 51 65 85;
+    --color-border-hover-rgb: 71 85 105;
+
+    /* Fallback hex values for non-opacity use */
     --color-primary: #60a5fa;
     --color-primary-dark: #3b82f6;
     --color-secondary: #94a3b8;
@@ -371,6 +401,21 @@
 /* Стили для dark mode */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    /* RGB values for opacity support */
+    --color-primary-rgb: 96 165 250;
+    --color-primary-dark-rgb: 59 130 246;
+    --color-secondary-rgb: 148 163 184;
+    --color-success-rgb: 74 222 128;
+    --color-warning-rgb: 251 191 36;
+    --color-error-rgb: 248 113 113;
+    --color-background-rgb: 15 23 42;
+    --color-surface-rgb: 30 41 59;
+    --color-text-rgb: 241 245 249;
+    --color-text-secondary-rgb: 148 163 184;
+    --color-border-rgb: 51 65 85;
+    --color-border-hover-rgb: 71 85 105;
+
+    /* Fallback hex values for non-opacity use */
     --color-primary: #60a5fa;
     --color-primary-dark: #3b82f6;
     --color-secondary: #94a3b8;
