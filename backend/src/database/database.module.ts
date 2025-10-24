@@ -27,12 +27,7 @@ import { join } from 'path';
             join(__dirname, 'migrations', '*{.ts,.js}'),
           ],
           migrationsRun: true,
-          ...(isProduction && {
-            ssl: { rejectUnauthorized: false },
-          }),
-          extra: {
-            ssl: isProduction ? { rejectUnauthorized: false } : false,
-          },
+          ssl: isProduction ? { rejectUnauthorized: false } : false,
         };
       },
       inject: [ConfigService],
@@ -64,12 +59,7 @@ export class DatabaseModule {
         join(__dirname, 'migrations', '*{.ts,.js}'),
       ],
       migrationsRun: true,
-      ...(isProduction && {
-        ssl: { rejectUnauthorized: false },
-      }),
-      extra: {
-        ssl: isProduction ? { rejectUnauthorized: false } : false,
-      },
+      ssl: isProduction ? { rejectUnauthorized: false } : false,
     };
   }
 }
