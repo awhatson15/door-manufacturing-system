@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole, UserStatus } from '../entities/user.entity';
 import { Role } from '../entities/role.entity';
@@ -46,7 +46,7 @@ export class UsersService {
 
     // Assign roles
     if (roles && roles.length > 0) {
-      user.roles = await this.roleRepository.findByIds(roles);
+      user.roles = await this.roleRepository.findBy({ id: In(roles) });
     } else {
       // Assign default role
       const defaultRole = await this.roleRepository.findOne({
@@ -116,7 +116,7 @@ export class UsersService {
       if (roles.length === 0) {
         user.roles = [];
       } else {
-        user.roles = await this.roleRepository.findByIds(roles);
+        user.roles = await this.roleRepository.findBy({ id: In(roles) });
       }
     }
 
@@ -183,7 +183,7 @@ export class UsersService {
     return await this.userRepository.findOne({
       where: {
         passwordResetToken: token,
-        passwordResetExpires: { $gt: new Date() } as any,
+        passwordResetExpires: MoreThan(new Date()),
       },
     });
   }

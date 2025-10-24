@@ -3,6 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { DatabaseModule } from './database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { StagesModule } from './modules/stages/stages.module';
+import { FilesModule } from './modules/files/files.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { HistoryModule } from './modules/history/history.module';
 
 @Module({
   imports: [
@@ -14,6 +23,17 @@ import { DatabaseModule } from './database/database.module';
 
     // Database
     DatabaseModule,
+
+    // Feature Modules
+    AuthModule,
+    UsersModule,
+    CustomersModule,
+    OrdersModule,
+    StagesModule,
+    FilesModule,
+    CommentsModule,
+    NotificationsModule,
+    HistoryModule,
   ],
   controllers: [],
   providers: [],

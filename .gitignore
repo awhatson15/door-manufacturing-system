@@ -138,3 +138,5 @@ coverage/
 
 # Local development
 .local/
+
+.claude/

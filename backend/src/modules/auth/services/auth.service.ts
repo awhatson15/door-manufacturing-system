@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserStatus } from '../../users/entities/user.entity';
 import { LoginDto } from '../dto/login.dto';
@@ -154,7 +154,14 @@ export class AuthService {
     };
   }
 
-  async logout(user: User, ipAddress?: string, userAgent?: string): Promise<void> {
+  async logout(userId: string, ipAddress?: string, userAgent?: string): Promise<void> {
+    // Получаем пользователя
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
     // Log logout action
     await this.historyService.create({
       action: HistoryAction.LOGOUT,
@@ -259,7 +266,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: {
         passwordResetToken: token,
-        passwordResetExpires: { $gt: new Date() } as any,
+        passwordResetExpires: MoreThan(new Date()),
       },
     });
 
