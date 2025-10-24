@@ -23,20 +23,6 @@ export class AppController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-    };
-  }
-
-  @Get('api/health')
-  @ApiOperation({ summary: 'API Health check endpoint' })
-  @ApiResponse({
-    status: 200,
-    description: 'API is healthy',
-  })
-  apiHealthCheck() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
       service: 'Door Manufacturing System API',
     };
   }
