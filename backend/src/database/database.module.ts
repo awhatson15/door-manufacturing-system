@@ -16,8 +16,11 @@ import { join } from 'path';
         const dbPass = configService.get('DB_PASSWORD') || 'postgres';
         const dbName = configService.get('DB_NAME') || 'door_manufacturing';
 
-        // Build connection URL with sslmode parameter for non-production
-        const connectionUrl = isProduction
+        // Determine if we're connecting to a local/Docker database
+        const isLocalDb = ['localhost', '127.0.0.1', 'postgres'].includes(dbHost);
+
+        // Build connection URL - disable SSL for local databases
+        const connectionUrl = !isLocalDb
           ? `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`
           : `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?sslmode=disable`;
 
@@ -34,7 +37,8 @@ import { join } from 'path';
             join(__dirname, 'migrations', '*{.ts,.js}'),
           ],
           migrationsRun: true,
-          ...(isProduction && { ssl: { rejectUnauthorized: false } }),
+          // Only use SSL for remote production databases
+          ...(!isLocalDb && isProduction && { ssl: { rejectUnauthorized: false } }),
         };
       },
       inject: [ConfigService],
@@ -55,8 +59,11 @@ export class DatabaseModule {
     const dbPass = this.configService.get('DB_PASSWORD') || 'postgres';
     const dbName = this.configService.get('DB_NAME') || 'door_manufacturing';
 
-    // Build connection URL with sslmode parameter for non-production
-    const connectionUrl = isProduction
+    // Determine if we're connecting to a local/Docker database
+    const isLocalDb = ['localhost', '127.0.0.1', 'postgres'].includes(dbHost);
+
+    // Build connection URL - disable SSL for local databases
+    const connectionUrl = !isLocalDb
       ? `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`
       : `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?sslmode=disable`;
 
@@ -73,7 +80,8 @@ export class DatabaseModule {
         join(__dirname, 'migrations', '*{.ts,.js}'),
       ],
       migrationsRun: true,
-      ...(isProduction && { ssl: { rejectUnauthorized: false } }),
+      // Only use SSL for remote production databases
+      ...(!isLocalDb && isProduction && { ssl: { rejectUnauthorized: false } }),
     };
   }
 }
