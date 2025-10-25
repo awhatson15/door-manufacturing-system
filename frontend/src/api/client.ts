@@ -25,17 +25,21 @@ export interface ApiError {
 // Создание экземпляра axios
 const createApiInstance = (): AxiosInstance => {
   // Определяем базовый URL в зависимости от окружения
-  // Определяем baseURL для API
-  // В Docker-окружении используем внутреннее имя сервиса, если доступно
-  // В противном случае используем переменную окружения или localhost по умолчанию
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-  
-  // Логирование для диагностики CORS
+  // На клиентской стороне (браузер) используем NEXT_PUBLIC_API_URL
+  // На серверной стороне (Docker SSR) используем API_URL для внутренней Docker сети
+  const isClient = typeof window !== 'undefined';
+  const baseURL = isClient
+    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api'
+    : (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api';
+
+  // Логирование для диагностики
   console.log('🔍 Frontend API Configuration:');
+  console.log(`- isClient: ${isClient}`);
   console.log(`- baseURL: ${baseURL}`);
   console.log(`- NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
+  console.log(`- API_URL: ${process.env.API_URL}`);
   console.log(`- NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`- Current origin: ${typeof window !== 'undefined' ? window.location.origin : 'Server-side'}`);
+  console.log(`- Current origin: ${isClient ? window.location.origin : 'Server-side'}`);
   
   const instance = axios.create({
     baseURL,
