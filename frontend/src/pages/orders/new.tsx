@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -143,7 +144,10 @@ export default function NewOrderPage() {
   };
 
   return (
-    <Layout title="Новая заявка">
+    <Layout>
+      <Head>
+        <title>Новая заявка | Door Manufacturing</title>
+      </Head>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">

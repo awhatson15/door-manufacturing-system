@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
+import { Layout } from '@/components/Layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -182,7 +183,10 @@ export default function EditOrderPage() {
 
   if (!order) {
     return (
-      <Layout title="Загрузка...">
+      <Layout>
+        <Head>
+          <title>Загрузка... | Door Manufacturing</title>
+        </Head>
         <div className="flex justify-center items-center h-64">
           <div className="text-gray-600">Загрузка...</div>
         </div>
@@ -191,7 +195,10 @@ export default function EditOrderPage() {
   }
 
   return (
-    <Layout title={`Редактирование заявки ${order.displayName}`}>
+    <Layout>
+      <Head>
+        <title>Редактирование заявки {order.displayName} | Door Manufacturing</title>
+      </Head>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
