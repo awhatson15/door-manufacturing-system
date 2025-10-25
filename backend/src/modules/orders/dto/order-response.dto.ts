@@ -13,14 +13,23 @@ export class OrderResponseDto {
   @ApiProperty()
   status: string;
 
-  @ApiProperty()
-  doorType: string;
-
-  @ApiProperty()
-  dimensions: string;
+  @ApiProperty({ required: false })
+  doorType?: any;
 
   @ApiProperty({ required: false })
-  colorCoating?: string;
+  heightMm?: number;
+
+  @ApiProperty({ required: false })
+  widthMm?: number;
+
+  @ApiProperty({ required: false })
+  color?: any;
+
+  @ApiProperty({ required: false })
+  lock?: any;
+
+  @ApiProperty({ required: false })
+  threshold?: any;
 
   @ApiProperty({ required: false })
   shieldNumber?: string;
@@ -38,7 +47,7 @@ export class OrderResponseDto {
   actualDeliveryDate?: Date;
 
   @ApiProperty({ required: false })
-  deliveryType?: string;
+  deliveryMethod?: string;
 
   @ApiProperty()
   totalAmount?: number;
@@ -53,7 +62,7 @@ export class OrderResponseDto {
   isCancelled: boolean;
 
   @ApiProperty({ required: false })
-  cancelReason?: string;
+  cancelReason?: any;
 
   @ApiProperty()
   isPaused: boolean;

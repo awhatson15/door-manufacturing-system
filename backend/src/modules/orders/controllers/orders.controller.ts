@@ -119,8 +119,8 @@ export class OrdersController {
   })
   @ApiResponse({ status: 400, description: 'Заявка уже отменена' })
   @ApiResponse({ status: 404, description: 'Заявка не найдена' })
-  async cancel(@Param('id') id: string, @Body('reason') reason: string, @Request() req) {
-    return await this.ordersService.cancel(id, reason, req.user.id);
+  async cancel(@Param('id') id: string, @Body('cancelReasonId') cancelReasonId: string | null, @Request() req) {
+    return await this.ordersService.cancel(id, cancelReasonId, req.user.id);
   }
 
   @Post(':id/pause')

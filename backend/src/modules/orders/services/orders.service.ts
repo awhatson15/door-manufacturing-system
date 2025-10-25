@@ -177,7 +177,7 @@ export class OrdersService {
       status,
       customerId,
       managerId,
-      doorType,
+      doorTypeId,
       search,
       createdFrom,
       createdTo,
@@ -220,8 +220,8 @@ export class OrdersService {
       queryBuilder.andWhere('order.manager.id = :managerId', { managerId });
     }
 
-    if (doorType) {
-      queryBuilder.andWhere('order.doorType = :doorType', { doorType });
+    if (doorTypeId) {
+      queryBuilder.andWhere('order.doorType.id = :doorTypeId', { doorTypeId });
     }
 
     if (search) {
@@ -490,15 +490,24 @@ export class OrdersService {
   /**
    * Отмена заявки
    */
-  async cancel(id: string, reason: string, currentUserId?: string): Promise<Order> {
+  async cancel(id: string, cancelReasonId: string | null, currentUserId?: string): Promise<Order> {
     const order = await this.findOne(id);
 
     if (order.isCancelled) {
       throw new BadRequestException('Заявка уже отменена');
     }
 
+    // Загрузка причины отмены, если указана
+    let cancelReason: CancelReason | null = null;
+    if (cancelReasonId) {
+      cancelReason = await this.entityManager.findOne(CancelReason, { where: { id: cancelReasonId } });
+      if (!cancelReason) {
+        throw new NotFoundException('Причина отмены не найдена');
+      }
+    }
+
     order.isCancelled = true;
-    order.cancelReason = reason;
+    order.cancelReason = cancelReason;
     order.status = OrderStatus.CANCELLED;
 
     const savedOrder = await this.orderRepository.save(order);
@@ -511,8 +520,8 @@ export class OrdersService {
         HistoryEntityType.ORDER,
         savedOrder.id,
         { status: OrderStatus.IN_PROGRESS, isCancelled: false },
-        { status: OrderStatus.CANCELLED, isCancelled: true, cancelReason: reason },
-        `Отменена заявка ${savedOrder.displayName}: ${reason}`,
+        { status: OrderStatus.CANCELLED, isCancelled: true, cancelReasonId },
+        `Отменена заявка ${savedOrder.displayName}${cancelReason ? ': ' + cancelReason.name : ''}`,
       );
     }
 

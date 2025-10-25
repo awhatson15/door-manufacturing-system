@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString, IsUUID, IsInt, Min, Max, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus, DoorType } from '../entities/order.entity';
+import { OrderStatus } from '../entities/order.entity';
 
 export class QueryOrderDto {
   @ApiProperty({ description: 'Номер страницы', default: 1, required: false })
@@ -34,10 +34,10 @@ export class QueryOrderDto {
   @IsUUID()
   managerId?: string;
 
-  @ApiProperty({ enum: DoorType, description: 'Тип двери', required: false })
+  @ApiProperty({ description: 'ID типа двери', required: false })
   @IsOptional()
-  @IsEnum(DoorType)
-  doorType?: DoorType;
+  @IsUUID()
+  doorTypeId?: string;
 
   @ApiProperty({ description: 'Поиск по номеру заявки', required: false })
   @IsOptional()
