@@ -24,20 +24,19 @@ export interface ApiError {
 
 // Создание экземпляра axios
 const createApiInstance = (): AxiosInstance => {
-  // Определяем базовый URL в зависимости от окружения
-  // На клиентской стороне (браузер) используем NEXT_PUBLIC_API_URL
-  // На серверной стороне (Docker SSR) используем API_URL для внутренней Docker сети
+  // Используем относительные пути для работы через Next.js rewrites
+  // На клиентской стороне (браузер) используем относительный путь '/api'
+  // На серверной стороне (Docker SSR) используем API_URL для прямого подключения к backend
   const isClient = typeof window !== 'undefined';
   const baseURL = isClient
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api'
-    : (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api';
+    ? '/api' // Относительный путь - будет проксироваться через Next.js rewrites
+    : (process.env.API_URL || 'http://localhost:3000') + '/api'; // Прямое подключение к backend в SSR
 
   // Логирование для диагностики
   console.log('🔍 Frontend API Configuration:');
   console.log(`- isClient: ${isClient}`);
   console.log(`- baseURL: ${baseURL}`);
-  console.log(`- NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
-  console.log(`- API_URL: ${process.env.API_URL}`);
+  console.log(`- API_URL (SSR): ${process.env.API_URL}`);
   console.log(`- NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`- Current origin: ${isClient ? window.location.origin : 'Server-side'}`);
   
