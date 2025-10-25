@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ClipboardDocumentListIcon,
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
+import { ordersApi, OrderStatistics } from '@/api/orders';
 
 interface StatCardProps {
   title: string;
@@ -93,37 +94,71 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 export const StatsCards: React.FC = () => {
-  // В реальном приложении эти данные будут приходить с API
+  const [statistics, setStatistics] = useState<OrderStatistics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await ordersApi.getStatistics();
+        setStatistics(data);
+      } catch (err: any) {
+        console.error('Error fetching statistics:', err);
+        setError(err.message || 'Ошибка загрузки статистики');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-gray-50 rounded-lg p-6 border border-gray-200 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !statistics) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        {error || 'Не удалось загрузить статистику'}
+      </div>
+    );
+  }
+
   const stats = [
     {
       title: 'Все заявки',
-      value: 156,
-      change: 12,
-      changeType: 'increase' as const,
+      value: statistics.total || 0,
       icon: ClipboardDocumentListIcon,
       color: 'blue' as const,
     },
     {
       title: 'В работе',
-      value: 23,
-      change: -5,
-      changeType: 'decrease' as const,
+      value: statistics.byStatus?.IN_PROGRESS || 0,
       icon: ClockIcon,
       color: 'yellow' as const,
     },
     {
-      title: 'Завершено сегодня',
-      value: 8,
-      change: 15,
-      changeType: 'increase' as const,
+      title: 'Завершено',
+      value: statistics.byStatus?.COMPLETED || 0,
       icon: CheckCircleIcon,
       color: 'green' as const,
     },
     {
       title: 'Просрочено',
-      value: 3,
-      change: -2,
-      changeType: 'decrease' as const,
+      value: statistics.overdueCount || 0,
       icon: ExclamationTriangleIcon,
       color: 'red' as const,
     },

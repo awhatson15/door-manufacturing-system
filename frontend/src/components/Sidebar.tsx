@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -18,22 +19,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
 
   const menuItems = [
     {
-      name: 'Dashboard',
+      name: 'Главная',
       icon: HomeIcon,
-      href: '/dashboard',
-      active: router.pathname === '/dashboard',
+      href: '/',
+      active: router.pathname === '/',
     },
     {
       name: 'Заявки',
       icon: ClipboardDocumentListIcon,
       href: '/orders',
-      active: router.pathname === '/orders',
+      active: router.pathname.startsWith('/orders'),
     },
     {
       name: 'Заказчики',
       icon: UserGroupIcon,
       href: '/customers',
-      active: router.pathname === '/customers',
+      active: router.pathname.startsWith('/customers'),
     },
     {
       name: 'Файлы',
@@ -68,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.name}>
-              <a
+              <Link
                 href={item.href}
                 className={`
                   flex items-center px-4 py-3 text-sm font-medium rounded-lg
@@ -84,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                   aria-hidden="true"
                 />
                 {item.name}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
