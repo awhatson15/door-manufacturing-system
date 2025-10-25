@@ -1,8 +1,29 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, createSlice } from '@reduxjs/toolkit';
+
+// Создаем простой редьюсер для демонстрации
+const initialState = {
+  user: null,
+  isAuthenticated: false,
+};
+
+const appSlice = createSlice({
+  name: 'app',
+  initialState,
+  reducers: {
+    setUser: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
+    },
+    clearUser: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+    },
+  },
+});
 
 // Определяем тип для корневого состояния
 export interface RootState {
-  // Здесь будут наши редьюсеры
+  app: ReturnType<typeof appSlice.reducer>;
 }
 
 // Тип для dispatch
@@ -11,7 +32,7 @@ export type AppDispatch = typeof store.dispatch;
 // Создаем store с базовой конфигурацией
 export const store = configureStore({
   reducer: {
-    // Здесь будут добавлены редьюсеры
+    app: appSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -30,3 +51,6 @@ export const useAppSelector = <T>(selector: (state: RootState) => T) => {
   // Но для простоты пока вернем mock
   return selector({} as RootState);
 };
+
+// Экспортируем действия
+export const { setUser, clearUser } = appSlice.actions;

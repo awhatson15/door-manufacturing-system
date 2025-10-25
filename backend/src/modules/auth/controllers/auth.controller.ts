@@ -15,6 +15,17 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Успешный вход' })
   @ApiResponse({ status: 401, description: 'Неверные учетные данные' })
   async login(@Body() loginDto: LoginDto, @Request() req) {
+    // Логирование для диагностики CORS
+    console.log('🔍 Auth Controller - Login Request:');
+    console.log(`- Method: ${req.method}`);
+    console.log(`- URL: ${req.url}`);
+    console.log(`- Origin: ${req.headers.origin}`);
+    console.log(`- Host: ${req.headers.host}`);
+    console.log(`- User-Agent: ${req.headers['user-agent']}`);
+    console.log(`- IP: ${req.ip}`);
+    console.log(`- X-Forwarded-For: ${req.headers['x-forwarded-for']}`);
+    console.log(`- Body:`, JSON.stringify(loginDto));
+    
     const ipAddress = req.ip || req.connection?.remoteAddress;
     const userAgent = req.headers['user-agent'];
     return this.authService.login(loginDto, ipAddress, userAgent);

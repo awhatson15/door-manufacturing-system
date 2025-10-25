@@ -25,7 +25,17 @@ export interface ApiError {
 // Создание экземпляра axios
 const createApiInstance = (): AxiosInstance => {
   // Определяем базовый URL в зависимости от окружения
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  // Определяем baseURL для API
+  // В Docker-окружении используем внутреннее имя сервиса, если доступно
+  // В противном случае используем переменную окружения или localhost по умолчанию
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  
+  // Логирование для диагностики CORS
+  console.log('🔍 Frontend API Configuration:');
+  console.log(`- baseURL: ${baseURL}`);
+  console.log(`- NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
+  console.log(`- NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`- Current origin: ${typeof window !== 'undefined' ? window.location.origin : 'Server-side'}`);
   
   const instance = axios.create({
     baseURL,
@@ -33,6 +43,7 @@ const createApiInstance = (): AxiosInstance => {
     headers: {
       'Content-Type': 'application/json',
     },
+    withCredentials: true, // Важно для CORS с credentials
   });
 
   // Interceptor для запросов - добавление токена авторизации

@@ -4,6 +4,7 @@ import { api } from './client';
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterRequest {
@@ -26,8 +27,8 @@ export interface LoginResponse {
     updatedAt: string;
   };
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
+  tokenType: string;
 }
 
 export interface RefreshTokenRequest {
@@ -36,8 +37,8 @@ export interface RefreshTokenRequest {
 
 export interface RefreshTokenResponse {
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
+  tokenType: string;
 }
 
 export interface UserProfile {
@@ -88,10 +89,12 @@ export const authApi = {
   },
 
   // Сохранение токенов в localStorage
-  saveTokens: (accessToken: string, refreshToken: string): void => {
+  saveTokens: (accessToken: string, refreshToken?: string): void => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
     }
   },
 
@@ -133,7 +136,7 @@ export const authApi = {
       }
 
       const response = await authApi.refreshToken(refreshToken);
-      authApi.saveTokens(response.accessToken, response.refreshToken);
+      authApi.saveTokens(response.accessToken);
       return true;
     } catch (error) {
       console.error('Ошибка при обновлении токена:', error);

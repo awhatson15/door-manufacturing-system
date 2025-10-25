@@ -45,6 +45,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       UPLOAD_PATH: /app/uploads
+      FRONTEND_URL: http://localhost:3001
     ports:
       - "3000:3000"
     volumes:
@@ -67,8 +68,10 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://backend:3000
       API_URL: http://backend:3000
+      FRONTEND_URL: http://localhost:3001
       NEXT_PUBLIC_APP_ENV: ${NEXT_PUBLIC_APP_ENV:-development}
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: development
+      NEXT_PUBLIC_NODE_ENV: development
     ports:
       - "3001:3000"
     volumes:

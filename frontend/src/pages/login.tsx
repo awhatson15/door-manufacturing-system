@@ -28,7 +28,7 @@ const LoginPage: NextPage = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError(null);
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.remember);
     } catch (err: any) {
       setError(err.message || 'Ошибка при входе в систему');
     }
