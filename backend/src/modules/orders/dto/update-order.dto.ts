@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsBoolean, IsDateString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsBoolean, IsDateString, IsUUID } from 'class-validator';
 import { CreateOrderDto } from './create-order.dto';
 import { OrderStatus } from '../entities/order.entity';
 
@@ -14,10 +14,10 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   @IsBoolean()
   isCancelled?: boolean;
 
-  @ApiProperty({ description: 'Причина отмены', required: false })
+  @ApiProperty({ description: 'ID причины отмены', required: false })
   @IsOptional()
-  @IsString()
-  cancelReason?: string;
+  @IsUUID()
+  cancelReasonId?: string;
 
   @ApiProperty({ description: 'Заявка приостановлена', required: false })
   @IsOptional()

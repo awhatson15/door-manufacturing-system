@@ -6,6 +6,11 @@ import { OrderStage, OrderStageStatus } from '../entities/order-stage.entity';
 import { Customer } from '../../customers/entities/customer.entity';
 import { User } from '../../users/entities/user.entity';
 import { Stage } from '../../stages/entities/stage.entity';
+import { DoorType } from '../../references/entities/door-type.entity';
+import { RalColor } from '../../references/entities/ral-color.entity';
+import { Lock } from '../../references/entities/lock.entity';
+import { Threshold } from '../../references/entities/threshold.entity';
+import { CancelReason } from '../../references/entities/cancel-reason.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { UpdateOrderDto } from '../dto/update-order.dto';
 import { QueryOrderDto } from '../dto/query-order.dto';
@@ -39,7 +44,15 @@ export class OrdersService {
    */
   async create(createOrderDto: CreateOrderDto, currentUserId?: string): Promise<Order> {
     return this.entityManager.transaction(async transactionalEntityManager => {
-      const { customerId, managerId, ...orderData } = createOrderDto;
+      const {
+        customerId,
+        managerId,
+        doorTypeId,
+        colorId,
+        lockId,
+        thresholdId,
+        ...orderData
+      } = createOrderDto;
 
       // Проверяем существование заказчика
       const customer = await transactionalEntityManager.findOne(Customer, { where: { id: customerId } });
@@ -63,6 +76,39 @@ export class OrdersService {
         throw new BadRequestException('Необходимо указать менеджера');
       }
 
+      // Загружаем справочники, если указаны
+      let doorType: DoorType | undefined;
+      if (doorTypeId) {
+        doorType = await transactionalEntityManager.findOne(DoorType, { where: { id: doorTypeId } });
+        if (!doorType) {
+          throw new NotFoundException('Тип двери не найден');
+        }
+      }
+
+      let color: RalColor | undefined;
+      if (colorId) {
+        color = await transactionalEntityManager.findOne(RalColor, { where: { id: colorId } });
+        if (!color) {
+          throw new NotFoundException('Цвет RAL не найден');
+        }
+      }
+
+      let lock: Lock | undefined;
+      if (lockId) {
+        lock = await transactionalEntityManager.findOne(Lock, { where: { id: lockId } });
+        if (!lock) {
+          throw new NotFoundException('Замок не найден');
+        }
+      }
+
+      let threshold: Threshold | undefined;
+      if (thresholdId) {
+        threshold = await transactionalEntityManager.findOne(Threshold, { where: { id: thresholdId } });
+        if (!threshold) {
+          throw new NotFoundException('Порог не найден');
+        }
+      }
+
       // Проверяем уникальность mainNumber, если указан
       if (orderData.mainNumber) {
         const existingOrder = await transactionalEntityManager.findOne(Order, {
@@ -82,6 +128,10 @@ export class OrdersService {
         internalNumber,
         customer,
         manager,
+        doorType,
+        color,
+        lock,
+        threshold,
         status: OrderStatus.NEW,
         paidAmount: orderData.paidAmount || 0,
         isPaid: orderData.isPaid || false,
@@ -149,6 +199,11 @@ export class OrdersService {
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.customer', 'customer')
       .leftJoinAndSelect('order.manager', 'manager')
+      .leftJoinAndSelect('order.doorType', 'doorType')
+      .leftJoinAndSelect('order.color', 'color')
+      .leftJoinAndSelect('order.lock', 'lock')
+      .leftJoinAndSelect('order.threshold', 'threshold')
+      .leftJoinAndSelect('order.cancelReason', 'cancelReason')
       .skip(skip)
       .take(limit);
 
@@ -219,7 +274,17 @@ export class OrdersService {
   async findOne(id: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['customer', 'manager', 'orderStages', 'orderStages.stage'],
+      relations: [
+        'customer',
+        'manager',
+        'orderStages',
+        'orderStages.stage',
+        'doorType',
+        'color',
+        'lock',
+        'threshold',
+        'cancelReason',
+      ],
     });
 
     if (!order) {
@@ -234,7 +299,16 @@ export class OrdersService {
    */
   async update(id: string, updateOrderDto: UpdateOrderDto, currentUserId?: string): Promise<Order> {
     const order = await this.findOne(id);
-    const { customerId, managerId, ...updateData } = updateOrderDto;
+    const {
+      customerId,
+      managerId,
+      doorTypeId,
+      colorId,
+      lockId,
+      thresholdId,
+      cancelReasonId,
+      ...updateData
+    } = updateOrderDto;
 
     // Сохраняем старые значения для истории
     const oldValues = { ...order };
@@ -255,6 +329,71 @@ export class OrdersService {
         throw new NotFoundException('Менеджер не найден');
       }
       order.manager = manager;
+    }
+
+    // Обновляем тип двери, если указан
+    if (doorTypeId !== undefined) {
+      if (doorTypeId === null) {
+        order.doorType = null;
+      } else {
+        const doorType = await this.entityManager.findOne(DoorType, { where: { id: doorTypeId } });
+        if (!doorType) {
+          throw new NotFoundException('Тип двери не найден');
+        }
+        order.doorType = doorType;
+      }
+    }
+
+    // Обновляем цвет, если указан
+    if (colorId !== undefined) {
+      if (colorId === null) {
+        order.color = null;
+      } else {
+        const color = await this.entityManager.findOne(RalColor, { where: { id: colorId } });
+        if (!color) {
+          throw new NotFoundException('Цвет RAL не найден');
+        }
+        order.color = color;
+      }
+    }
+
+    // Обновляем замок, если указан
+    if (lockId !== undefined) {
+      if (lockId === null) {
+        order.lock = null;
+      } else {
+        const lock = await this.entityManager.findOne(Lock, { where: { id: lockId } });
+        if (!lock) {
+          throw new NotFoundException('Замок не найден');
+        }
+        order.lock = lock;
+      }
+    }
+
+    // Обновляем порог, если указан
+    if (thresholdId !== undefined) {
+      if (thresholdId === null) {
+        order.threshold = null;
+      } else {
+        const threshold = await this.entityManager.findOne(Threshold, { where: { id: thresholdId } });
+        if (!threshold) {
+          throw new NotFoundException('Порог не найден');
+        }
+        order.threshold = threshold;
+      }
+    }
+
+    // Обновляем причину отмены, если указана
+    if (cancelReasonId !== undefined) {
+      if (cancelReasonId === null) {
+        order.cancelReason = null;
+      } else {
+        const cancelReason = await this.entityManager.findOne(CancelReason, { where: { id: cancelReasonId } });
+        if (!cancelReason) {
+          throw new NotFoundException('Причина отмены не найдена');
+        }
+        order.cancelReason = cancelReason;
+      }
     }
 
     // Проверяем уникальность mainNumber, если изменяется
@@ -533,23 +672,29 @@ export class OrdersService {
    */
   private async generateInternalNumber(entityManager: EntityManager): Promise<string> {
     const year = new Date().getFullYear();
-    const prefix = `ORD-${year}`;
+    const prefix = `${year}-`;
 
     // Находим последний номер за текущий год с блокировкой
     const lastOrder = await entityManager
       .createQueryBuilder(Order, 'order')
       .setLock('pessimistic_write')
       .where('order.internalNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('order.createdAt', 'DESC')
+      .orderBy('order.internalNumber', 'DESC')
       .getOne();
 
     let nextNumber = 1;
     if (lastOrder) {
-      const lastNumber = parseInt(lastOrder.internalNumber.split('-')[2]);
-      nextNumber = lastNumber + 1;
+      // Извлекаем номер из формата YYYY-XXXX
+      const parts = lastOrder.internalNumber.split('-');
+      if (parts.length === 2) {
+        const lastNumber = parseInt(parts[1]);
+        if (!isNaN(lastNumber)) {
+          nextNumber = lastNumber + 1;
+        }
+      }
     }
 
-    return `${prefix}-${String(nextNumber).padStart(5, '0')}`;
+    return `${prefix}${String(nextNumber).padStart(4, '0')}`;
   }
 
   // ==================== OrderStages Management ====================

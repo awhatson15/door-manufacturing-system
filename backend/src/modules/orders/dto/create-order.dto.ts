@@ -8,8 +8,9 @@ import {
   IsNumber,
   Min,
   IsBoolean,
+  IsInt,
 } from 'class-validator';
-import { DoorType, DeliveryType } from '../entities/order.entity';
+import { DeliveryMethod } from '../entities/order.entity';
 
 export class CreateOrderDto {
   @ApiProperty({ description: 'ID заказчика' })
@@ -26,20 +27,39 @@ export class CreateOrderDto {
   @IsString()
   mainNumber?: string;
 
-  @ApiProperty({ enum: DoorType, description: 'Тип двери', default: DoorType.STANDARD })
-  @IsEnum(DoorType)
-  doorType: DoorType;
-
-  @ApiProperty({ description: 'Размеры (Высота × ширина)', example: '2000×900' })
-  @IsString()
-  dimensions: string;
-
-  @ApiProperty({ description: 'Цвет и покрытие', required: false })
+  @ApiProperty({ description: 'ID типа двери', required: false })
   @IsOptional()
-  @IsString()
-  colorCoating?: string;
+  @IsUUID()
+  doorTypeId?: string;
 
-  @ApiProperty({ description: 'Номер щита (для пожарных дверей)', required: false })
+  @ApiProperty({ description: 'Высота двери (мм)', example: 2000, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  heightMm?: number;
+
+  @ApiProperty({ description: 'Ширина двери (мм)', example: 900, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  widthMm?: number;
+
+  @ApiProperty({ description: 'ID цвета RAL', required: false })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
+
+  @ApiProperty({ description: 'ID замка', required: false })
+  @IsOptional()
+  @IsUUID()
+  lockId?: string;
+
+  @ApiProperty({ description: 'ID порога', required: false })
+  @IsOptional()
+  @IsUUID()
+  thresholdId?: string;
+
+  @ApiProperty({ description: 'Номер щита (для противопожарных дверей)', required: false })
   @IsOptional()
   @IsString()
   shieldNumber?: string;
@@ -54,10 +74,15 @@ export class CreateOrderDto {
   @IsDateString()
   plannedCompletionDate?: string;
 
-  @ApiProperty({ enum: DeliveryType, description: 'Тип доставки', required: false })
+  @ApiProperty({
+    enum: DeliveryMethod,
+    description: 'Метод доставки',
+    example: DeliveryMethod.PICKUP,
+    required: false
+  })
   @IsOptional()
-  @IsEnum(DeliveryType)
-  deliveryType?: DeliveryType;
+  @IsEnum(DeliveryMethod)
+  deliveryMethod?: DeliveryMethod;
 
   @ApiProperty({ description: 'Общая сумма', required: false })
   @IsOptional()

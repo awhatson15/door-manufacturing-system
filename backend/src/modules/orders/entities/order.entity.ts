@@ -6,6 +6,11 @@ import { File } from '../../files/entities/file.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { History } from '../../history/entities/history.entity';
 import { Notification } from '../../notifications/entities/notification.entity';
+import { DoorType } from '../../references/entities/door-type.entity';
+import { RalColor } from '../../references/entities/ral-color.entity';
+import { Lock } from '../../references/entities/lock.entity';
+import { Threshold } from '../../references/entities/threshold.entity';
+import { CancelReason } from '../../references/entities/cancel-reason.entity';
 
 export enum OrderStatus {
   NEW = 'new',
@@ -15,17 +20,10 @@ export enum OrderStatus {
   COMPLETED = 'completed',
 }
 
-export enum DoorType {
-  STANDARD = 'standard',
-  FIRE = 'fire',
-  TECHNICAL = 'technical',
-  CUSTOM = 'custom',
-}
-
-export enum DeliveryType {
-  PICKUP = 'pickup',
-  DELIVERY = 'delivery',
-  DELIVERY_WITH_INSTALLATION = 'delivery_with_installation',
+export enum DeliveryMethod {
+  PICKUP = 'самовывоз',
+  DELIVERY = 'доставка',
+  DELIVERY_WITH_INSTALLATION = 'доставка+монтаж',
 }
 
 @Entity('orders')
@@ -60,22 +58,31 @@ export class Order {
   @JoinColumn({ name: 'manager_id' })
   manager: User;
 
-  // Order details
-  @Column({
-    type: 'enum',
-    enum: DoorType,
-    default: DoorType.STANDARD,
-  })
-  doorType: DoorType;
+  // Order details - References
+  @ManyToOne(() => DoorType, { nullable: true })
+  @JoinColumn({ name: 'door_type_id' })
+  doorType?: DoorType;
 
-  @Column()
-  dimensions: string; // Format: "Высота × ширина"
+  @Column({ name: 'height_mm', type: 'int', nullable: true })
+  heightMm?: number;
 
-  @Column({ name: 'color_coating', nullable: true })
-  colorCoating?: string;
+  @Column({ name: 'width_mm', type: 'int', nullable: true })
+  widthMm?: number;
+
+  @ManyToOne(() => RalColor, { nullable: true })
+  @JoinColumn({ name: 'color_id' })
+  color?: RalColor;
+
+  @ManyToOne(() => Lock, { nullable: true })
+  @JoinColumn({ name: 'lock_id' })
+  lock?: Lock;
+
+  @ManyToOne(() => Threshold, { nullable: true })
+  @JoinColumn({ name: 'threshold_id' })
+  threshold?: Threshold;
 
   @Column({ name: 'shield_number', nullable: true })
-  shieldNumber?: string; // For fire doors
+  shieldNumber?: string; // For fireproof doors
 
   @Column({ name: 'manager_comment', type: 'text', nullable: true })
   managerComment?: string;
@@ -85,10 +92,10 @@ export class Order {
 
   @Column({
     type: 'enum',
-    enum: DeliveryType,
+    enum: DeliveryMethod,
     nullable: true,
   })
-  deliveryType?: DeliveryType;
+  deliveryMethod?: DeliveryMethod;
 
   // Order status
   @Column({
@@ -101,8 +108,9 @@ export class Order {
   @Column({ name: 'is_cancelled', default: false })
   isCancelled: boolean;
 
-  @Column({ name: 'cancel_reason', nullable: true })
-  cancelReason?: string;
+  @ManyToOne(() => CancelReason, { nullable: true })
+  @JoinColumn({ name: 'cancel_reason_id' })
+  cancelReason?: CancelReason;
 
   @Column({ name: 'is_paused', default: false })
   isPaused: boolean;
@@ -190,21 +198,15 @@ export class Order {
   }
 
   get doorTypeText(): string {
-    switch (this.doorType) {
-      case DoorType.STANDARD: return 'Стандартная';
-      case DoorType.FIRE: return 'Пожарная';
-      case DoorType.TECHNICAL: return 'Техническая';
-      case DoorType.CUSTOM: return 'Нестандартная';
-      default: return this.doorType;
-    }
+    return this.doorType?.name || '';
   }
 
-  get deliveryTypeText(): string {
-    switch (this.deliveryType) {
-      case DeliveryType.PICKUP: return 'Самовывоз';
-      case DeliveryType.DELIVERY: return 'Доставка';
-      case DeliveryType.DELIVERY_WITH_INSTALLATION: return 'Доставка с монтажом';
-      default: return '';
-    }
+  get dimensionsText(): string {
+    if (!this.heightMm && !this.widthMm) return '';
+    return `${this.heightMm || '?'} × ${this.widthMm || '?'} мм`;
+  }
+
+  get deliveryMethodText(): string {
+    return this.deliveryMethod || '';
   }
 }

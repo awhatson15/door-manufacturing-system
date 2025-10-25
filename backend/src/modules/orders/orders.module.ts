@@ -8,11 +8,13 @@ import { Customer } from '../customers/entities/customer.entity';
 import { User } from '../users/entities/user.entity';
 import { Stage } from '../stages/entities/stage.entity';
 import { HistoryModule } from '../history/history.module';
+import { ReferencesModule } from '../references/references.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderStage, Customer, User, Stage]),
     HistoryModule,
+    ReferencesModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

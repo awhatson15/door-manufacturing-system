@@ -12,6 +12,7 @@ import { FilesModule } from './modules/files/files.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HistoryModule } from './modules/history/history.module';
+import { ReferencesModule } from './modules/references/references.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -35,6 +36,7 @@ import { AppController } from './app.controller';
     CommentsModule,
     NotificationsModule,
     HistoryModule,
+    ReferencesModule,
   ],
   controllers: [AppController],
   providers: [],
